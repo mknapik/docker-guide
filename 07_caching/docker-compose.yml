@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  java-hello:
+    image: me.knapik/java-hello:builder
+    build:
+      context: java-hello
+      target: builder
+    command: tail -f /dev/null
+    init: true
+    volumes:
+      - ./java-hello:/code:ro
+      - /home/gradle/.gradle2
+      - /code/.gradle
+      - /code/build
+  frontend:
+    image: me.knapik/frontend:builder
+    build:
+      context: frontend
+      target: builder
+    init: true
+    ports:
+      - 8080:80
+    volumes:
+      - ./frontend:/code:ro
+      - node_modules:/code/node_modules
+      - build:/code/public
+  java-hello-production:
+    image: me.knapik/java-hello
+    build:
+      context: java-hello
+  frontend-production:
+    image: me.knapik/frontend
+    build:
+      context: frontend
+    ports:
+      - 8081:80
+
+volumes:
+  node_modules:
+  build:
