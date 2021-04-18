@@ -221,3 +221,21 @@ tasks:
     deps: [volumes:build]
     cmds:
       - docker run --rm {{.REPO_PREFIX}}/volumes
+
+  inception:
+    cmds:
+      - docker-compose up -d
+      - sleep 1
+      - docker-compose exec dind docker run alpine ls
+      - docker-compose exec dind docker ps -a
+      - docker-compose down -v --remove-orphans
+    dir: 08_inception
+
+  traefik:
+    cmds:
+      - docker-compose up -d
+      - sleep 3
+      - 'curl -H "Host: whoami.localhost" http://localhost:80'
+      - 'curl -H "Host: frontend.localhost" http://localhost:80'
+      - docker-compose down -v --remove-orphans
+    dir: 09_traefik
