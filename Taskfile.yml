@@ -22,6 +22,7 @@ tasks:
     cmds:
       - task: size:ubuntu:run
       - task: size:alpine:run
+      - task: size:build-time-deps:run
       - task: stages:run
       - task: entrypoint:curl:example
       - task: alpine
@@ -148,6 +149,16 @@ tasks:
     deps: [size:alpine:build]
     cmds:
       - docker images {{.REPO_PREFIX}}/size-alpine
+
+  size:build-time-deps:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:big --target=big .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:small --target=small .
+    dir: 00_size/build-time-deps
+  size:build-time-deps:run:
+    deps: [size:build-time-deps:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/size-build-time-deps
 
   stages:build:
     cmds:
