@@ -1,4 +1,4 @@
-# Non-Comprehensive Guide to writing Dockerfiles
+# Non-Comprehensive Guide to Writing Dockerfiles
 
 ## 0. Docker Layers & Image Size
 

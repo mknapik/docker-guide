@@ -1,6 +1,6 @@
 # https://taskfile.dev
 
-version: "3"
+version: "3.0"
 
 vars:
   REPO_PREFIX: me.knapik
@@ -11,6 +11,11 @@ vars:
       -v $PWD:/code \
       -w /code \
       {{.CONTAINER_PRETTIER}}
+
+includes:
+  prerequisites:
+    taskfile: ./taskfile/prerequisites.{{OS}}.yml
+    dir: .
 
 tasks:
   default:
@@ -239,3 +244,58 @@ tasks:
       - 'curl -H "Host: frontend.localhost" http://localhost:80'
       - docker-compose down -v --remove-orphans
     dir: 09_traefik
+
+  overhead:prettier:
+    cmds:
+      - task: overhead:prettier:help:run:nomount
+      - task: overhead:prettier:help:run:mount
+  overhead:prettier:help:
+    deps: [prerequisites:prettier, prerequisites:hyperfine]
+    cmds:
+      - docker run --init=true --rm --name=prettier -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
+      - |-
+        hyperfine \
+          "prettier --help" \
+          "docker exec prettier prettier --help" \
+          "docker run --rm tmknom/prettier --help" \
+          "docker run --rm -w /code -v $PWD:/code:ro tmknom/prettier --help" \
+          "docker run --rm --network none -w /code -v $PWD:/code:ro tmknom/prettier --help" \
+          "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro tmknom/prettier --help" \
+          "docker run --rm --privileged=true -w /code -v $PWD:/code:ro tmknom/prettier --help"
+      - docker stop prettier
+
+  overhead:prettier:check:
+    deps: [prerequisites:prettier, prerequisites:hyperfine]
+    cmds:
+      - docker run --init=true --rm --name=prettier -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
+      - cmd: |-
+             hyperfine -i \
+              'prettier --check "**/*.{yml,md}"' \
+              'docker exec prettier prettier --check "**/*.{yml,md}"' \
+              "docker run --rm -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
+              "docker run --rm --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
+              "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
+              "docker run --rm --privileged=true -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
+              "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
+        ignore_error: true
+      - docker stop prettier
+
+  overhead:noop:
+    deps: [prerequisites:prettier, prerequisites:hyperfine]
+    cmds:
+      - docker run --init=true --rm --name=noop -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
+      - docker run --init=true --rm --name=noop2 --network=none -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
+      - cmd: |-
+             hyperfine -i \
+              'true' \
+              'docker exec noop true' \
+              'docker exec noop2 true' \
+              "docker run --rm alpine true" \
+              "docker run --rm -w /code -v $PWD:/code:ro alpine true" \
+              "docker run --rm --network none -w /code -v $PWD:/code:ro alpine true" \
+              "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro alpine true" \
+              "docker run --rm --privileged=true -w /code -v $PWD:/code:ro alpine true" \
+              "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro alpine true" \
+              "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none alpine true"
+        ignore_error: true
+      - docker stop noop
