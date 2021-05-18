@@ -1,11 +1,11 @@
-FROM alpine:3 AS big
+FROM alpine:3 AS a
 
 RUN apk add htop
 
 
 
 
-FROM alpine:3 AS same-as-big
+FROM alpine:3 AS b
 
 RUN apk add htop
 RUN rm -rf /var/cache/apk
@@ -13,7 +13,7 @@ RUN rm -rf /var/cache/apk
 
 
 
-FROM alpine:3 AS small
+FROM alpine:3 AS c
 
 RUN apk add htop && \
   rm -rf /var/cache/apk
@@ -21,6 +21,6 @@ RUN apk add htop && \
 
 
 
-FROM alpine:3 AS same-as-small
+FROM alpine:3 AS d
 
 RUN apk add --no-cache htop

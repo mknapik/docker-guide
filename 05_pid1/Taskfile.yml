@@ -16,10 +16,11 @@ tasks:
       - task: pid1
 
   pid1:build:
+    silent: true
     cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:hangs --target hangs .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:dumb-init --target dumb-init .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:tini --target tini .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:hangs --target hangs . > /dev/null
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:dumb-init --target dumb-init . > /dev/null
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:tini --target tini . > /dev/null
     dir: .
   pid1:hangs:
     deps: [pid1:build]

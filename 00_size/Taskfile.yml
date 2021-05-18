@@ -13,40 +13,40 @@ vars:
 tasks:
   default:
     cmds:
-      - task: size:ubuntu:run
-      - task: size:alpine:run
-      - task: size:build-time-deps:run
+      - task: size:ubuntu
+      - task: size:alpine
+      - task: size:build-time-deps
 
   size:ubuntu:build:
     cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:big --target=big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:same --target=same .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:not-quite --target=not-quite .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:small --target=small .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:big --target=a .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:same --target=b .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:not-quite --target=c .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:small --target=d .
     dir: ubuntu
-  size:ubuntu:run:
+  size:ubuntu:
     deps: [size:ubuntu:build]
     cmds:
       - docker images {{.REPO_PREFIX}}/size-ubuntu
 
   size:alpine:build:
     cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:big --target=big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-big --target=same-as-big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:small --target=small .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-small   --target=same-as-small .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:big --target=a .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-big --target=b .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:small --target=c .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-small --target=d .
     dir: alpine
-  size:alpine:run:
+  size:alpine:
     deps: [size:alpine:build]
     cmds:
       - docker images {{.REPO_PREFIX}}/size-alpine
 
   size:build-time-deps:build:
     cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:big --target=big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:small --target=small .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:big --target=a .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:small --target=b .
     dir: build-time-deps
-  size:build-time-deps:run:
+  size:build-time-deps:
     deps: [size:build-time-deps:build]
     cmds:
       - docker images {{.REPO_PREFIX}}/size-build-time-deps

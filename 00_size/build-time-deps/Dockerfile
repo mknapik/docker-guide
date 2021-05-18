@@ -1,4 +1,4 @@
-FROM alpine:3 AS big
+FROM alpine:3 AS a
 
 RUN apk add --no-cache build-base curl
 
@@ -9,7 +9,7 @@ RUN apk del --no-cache build-base curl
 
 
 
-FROM alpine:3 AS small
+FROM alpine:3 AS b
 
 RUN apk add --no-cache --virtual deps build-base curl && \
     echo "build step" && \

@@ -2,6 +2,8 @@ FROM alpine:3
 
 RUN mkdir -p /mnt/dir1 /mnt/dir2
 
+RUN touch /mnt/dir1/keep0
+
 VOLUME /mnt/dir1
 
 RUN touch /mnt/dir1/keep && test -e /mnt/dir1/keep

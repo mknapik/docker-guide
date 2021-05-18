@@ -13,7 +13,7 @@ vars:
 tasks:
   default:
     cmds:
-      - task: test
+      - task: images-size
       - task: alpine
       - task: alpine:compare-tags
       - task: alpine:list-packages
@@ -49,13 +49,18 @@ tasks:
   debian:list-packages:
     cmds:
       - docker run --pull always --rm -it debian sh -c 'apt-get update && apt list | wc -l'
-  test:
+  images-size:pull:
     cmds:
       - docker pull centos:8
-      - docker pull debian:stable
       - docker pull bitnami/minideb
+      - docker pull debian:stable
       - docker pull debian:stable-slim
       - docker pull ubuntu:latest
       - docker pull redis
       - docker pull redis:alpine
       - docker pull bitnami/redis
+  images-size:
+    deps: [images-size:pull]
+    silent: true
+    cmds:
+      - docker images -f 'reference=ubuntu' -f 'reference=debian' -f 'reference=centos' -f 'reference=bitnami/minideb' -f 'reference=redis' -f 'reference=bitnami/redis'
