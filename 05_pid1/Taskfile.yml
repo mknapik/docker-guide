@@ -1,0 +1,57 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: pid1
+
+  pid1:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:hangs --target hangs .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:dumb-init --target dumb-init .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:tini --target tini .
+    dir: .
+  pid1:hangs:
+    deps: [pid1:build]
+    silent: true
+    cmds:
+      - echo 'docker run --rm --name pid1-hangs {{.REPO_PREFIX}}/pid1:hangs'
+  pid1:dumb-init:
+    deps: [pid1:build]
+    silent: true
+    cmds:
+      - echo 'docker run --rm --name pid1-dumb-init {{.REPO_PREFIX}}/pid1:dumb-init'
+  pid1:tini:
+    deps: [pid1:build]
+    silent: true
+    cmds:
+      - echo 'docker run --rm --name pid1-tini {{.REPO_PREFIX}}/pid1:tini'
+  pid1:builtin:
+    deps: [pid1:build]
+    silent: true
+    cmds:
+      - echo 'docker run --rm --init --name pid1-builtin {{.REPO_PREFIX}}/pid1:hangs'
+  pid1:compose:
+    deps: [pid1:build]
+    silent: true
+    cmds:
+      - echo 'docker-compose up'
+    dir: .
+  pid1:
+    silent: true
+    cmds:
+      - task: pid1:hangs
+      - task: pid1:dumb-init
+      - task: pid1:tini
+      - task: pid1:builtin
+      - task: pid1:compose

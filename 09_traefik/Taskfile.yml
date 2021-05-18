@@ -1,0 +1,25 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: traefik
+
+  traefik:
+    cmds:
+      - docker-compose up -d
+      - sleep 3
+      - 'curl -H "Host: whoami.localhost" http://localhost:80'
+      - 'curl -H "Host: frontend.localhost" http://localhost:80'
+      - docker-compose down -v --remove-orphans
+    dir: .

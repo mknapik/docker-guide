@@ -1,0 +1,25 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: volumes
+
+  volumes:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/volumes .
+    dir: .
+  volumes:
+    deps: [volumes:build]
+    cmds:
+      - docker run --rm {{.REPO_PREFIX}}/volumes

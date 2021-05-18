@@ -1,0 +1,60 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: caching:java-hello:build
+      - task: caching:frontend:build
+
+  caching:frontend:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/frontend:static .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/frontend:builder --target=builder .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/frontend .
+    dir: ./frontend
+  caching:frontend:server:
+    deps: [caching:frontend:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/frontend
+      - docker run --name frontend --rm -p 8080:80 {{.REPO_PREFIX}}/frontend:static
+    dir: ./frontend
+  caching:frontend:dev:
+    deps: [caching:frontend:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/frontend
+      - docker run --name frontend --rm -p 8080:80 -v $PWD:/code -v /code/node_modules {{.REPO_PREFIX}}/frontend:builder
+    dir: ./frontend
+
+  caching:java-hello:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/java-hello .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/java-hello:builder --target=builder .
+    dir: ./java-hello
+  caching:java-hello:app:
+    deps: [caching:java-hello:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/java-hello
+      - docker run --name java-hello --rm {{.REPO_PREFIX}}/java-hello
+    dir: ./java-hello
+  caching:java-hello:dev:
+    deps: [caching:java-hello:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/java-hello
+      - docker run --init --name java-hello --rm -v $PWD:/code -v /code/.gradle -v /code/build {{.REPO_PREFIX}}/java-hello:builder
+    dir: ./java-hello
+  caching:java-hello:dev:watch:
+    deps: [caching:java-hello:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/java-hello
+      - docker run --init --name java-hello --rm -v $PWD:/code -v /code/.gradle -v /code/build {{.REPO_PREFIX}}/java-hello:builder gradle --continuous run
+    dir: ./java-hello

@@ -1,0 +1,52 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: size:ubuntu:run
+      - task: size:alpine:run
+      - task: size:build-time-deps:run
+
+  size:ubuntu:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:big --target=big .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:same --target=same .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:not-quite --target=not-quite .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:small --target=small .
+    dir: ubuntu
+  size:ubuntu:run:
+    deps: [size:ubuntu:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/size-ubuntu
+
+  size:alpine:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:big --target=big .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-big --target=same-as-big .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:small --target=small .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-small   --target=same-as-small .
+    dir: alpine
+  size:alpine:run:
+    deps: [size:alpine:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/size-alpine
+
+  size:build-time-deps:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:big --target=big .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:small --target=small .
+    dir: build-time-deps
+  size:build-time-deps:run:
+    deps: [size:build-time-deps:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/size-build-time-deps

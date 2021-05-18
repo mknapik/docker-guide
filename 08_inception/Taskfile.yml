@@ -1,0 +1,25 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: inception
+
+  inception:
+    cmds:
+      - docker-compose up -d
+      - sleep 3
+      - docker-compose exec dind docker run alpine ls
+      - docker-compose exec dind docker ps -a
+      - docker-compose down -v --remove-orphans
+    dir: .

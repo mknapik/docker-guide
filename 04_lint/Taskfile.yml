@@ -1,0 +1,27 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: lint
+
+  lint:
+    cmds:
+      - |-
+        docker run --rm \
+          -w /code \
+          -v $PWD:/code:ro \
+          hadolint/hadolint \
+          hadolint Dockerfile {{.CLI_ARGS}}
+    ignore_error: true
+    dir: .

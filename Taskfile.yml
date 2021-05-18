@@ -16,21 +16,66 @@ includes:
   prerequisites:
     taskfile: ./taskfile/prerequisites.{{OS}}.yml
     dir: .
+  c00:
+    taskfile: ./00_size/Taskfile.yml
+    dir: 00_size
+  c01:
+    taskfile: ./01_stages/Taskfile.yml
+    dir: 01_stages
+  c02:
+    taskfile: ./02_entrypoint/Taskfile.yml
+    dir: 02_entrypoint
+  c03:
+    taskfile: ./03_alpine/Taskfile.yml
+    dir: 03_alpine
+  c04:
+    taskfile: ./04_lint/Taskfile.yml
+    dir: 04_lint
+  c05:
+    taskfile: ./05_pid1/Taskfile.yml
+    dir: 05_pid1
+  c06:
+    taskfile: ./06_volumes/Taskfile.yml
+    dir: 06_volumes
+  c07:
+    taskfile: ./07_caching/Taskfile.yml
+    dir: 07_caching
+  c08:
+    taskfile: ./08_inception/Taskfile.yml
+    dir: 08_inception
+  c09:
+    taskfile: ./09_traefik/Taskfile.yml
+    dir: 09_traefik
+  c10:
+    taskfile: ./10_performance/Taskfile.yml
+    dir: .
 
 tasks:
   default:
     cmds:
-      - task: size:ubuntu:run
-      - task: size:alpine:run
-      - task: size:build-time-deps:run
-      - task: stages:run
-      - task: entrypoint:curl:example
-      - task: alpine
-      - task: lint
-      - task: pid1
-      - task: volumes
-      - task: caching:java-hello:build
-      - task: caching:frontend:build
+      - task: c00
+      - task: c01
+      - task: c02
+      - task: c03
+      - task: c04
+      - task: c05
+      - task: c06
+      - task: c07
+      - task: c08
+      - task: c09
+
+  c00: { cmds: [{ task: c00:default }] }
+  c01: { cmds: [{ task: c01:default }] }
+  c02: { cmds: [{ task: c02:default }] }
+  c03: { cmds: [{ task: c03:default }] }
+  c04: { cmds: [{ task: c04:default }] }
+  c05: { cmds: [{ task: c05:default }] }
+  c06: { cmds: [{ task: c06:default }] }
+  c07: { cmds: [{ task: c07:default }] }
+  c08: { cmds: [{ task: c08:default }] }
+  c09: { cmds: [{ task: c09:default }] }
+  c10: { cmds: [{ task: c10:default }] }
+
   prerequisites:
     desc: "Installs all external dependencies using OS package manager."
     cmds:
@@ -45,279 +90,3 @@ tasks:
   format:
     cmds:
       - '{{.PRETTIERCLI}} --write "**/*.{js,jsx,ts,tsx,css,less,scss,vue,json,gql,md,yml,yaml}"'
-  pid1:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:hangs --target hangs .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:dumb-init --target dumb-init .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:tini --target tini .
-    dir: 05_pid1
-  pid1:hangs:
-    deps: [pid1:build]
-    silent: true
-    cmds:
-      - echo 'docker run --rm --name pid1-hangs {{.REPO_PREFIX}}/pid1:hangs'
-  pid1:dumb-init:
-    deps: [pid1:build]
-    silent: true
-    cmds:
-      - echo 'docker run --rm --name pid1-dumb-init {{.REPO_PREFIX}}/pid1:dumb-init'
-  pid1:tini:
-    deps: [pid1:build]
-    silent: true
-    cmds:
-      - echo 'docker run --rm --name pid1-tini {{.REPO_PREFIX}}/pid1:tini'
-  pid1:builtin:
-    deps: [pid1:build]
-    silent: true
-    cmds:
-      - echo 'docker run --rm --init --name pid1-builtin {{.REPO_PREFIX}}/pid1:hangs'
-  pid1:compose:
-    deps: [pid1:build]
-    silent: true
-    cmds:
-      - echo 'docker-compose up'
-    dir: 05_pid1
-  pid1:
-    cmds:
-      - task: pid1:hangs
-      - task: pid1:dumb-init
-      - task: pid1:tini
-      - task: pid1:builtin
-      - task: pid1:compose
-  caching:frontend:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/frontend:static .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/frontend:builder --target=builder .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/frontend .
-    dir: 07_caching/frontend
-  caching:frontend:server:
-    deps: [caching:frontend:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/frontend
-      - docker run --name frontend --rm -p 8080:80 {{.REPO_PREFIX}}/frontend:static
-    dir: 07_caching/frontend
-  caching:frontend:dev:
-    deps: [caching:frontend:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/frontend
-      - docker run --name frontend --rm -p 8080:80 -v node_modules:/code/node_modules {{.REPO_PREFIX}}/frontend:builder
-    dir: 07_caching/frontend
-
-  caching:java-hello:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/java-hello .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/java-hello:builder --target=builder .
-    dir: 07_caching/java-hello
-  caching:java-hello:app:
-    deps: [caching:java-hello:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/java-hello
-      - docker run --name java-hello --rm {{.REPO_PREFIX}}/java-hello
-    dir: 07_caching/java-hello
-  caching:java-hello:dev:
-    deps: [caching:java-hello:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/java-hello
-      - docker run --name java-hello --rm -v node_modules:/code/node_modules {{.REPO_PREFIX}}/java-hello:builder
-    dir: 07_caching/java-hello
-  caching:java-hello:dev:watch:
-    deps: [caching:java-hello:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/java-hello
-      - docker run --name java-hello --rm -v node_modules:/code/node_modules {{.REPO_PREFIX}}/java-hello:builder tail -f /dev/null
-    dir: 07_caching/java-hello
-  lint:
-    cmds:
-      - |-
-        docker run --rm \
-          -w /code \
-          -v $PWD:/code:ro \
-          hadolint/hadolint \
-          hadolint Dockerfile {{.CLI_ARGS}}
-    ignore_error: true
-    dir: 04_lint
-
-  size:ubuntu:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:big --target=big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:same --target=same .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:not-quite --target=not-quite .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-ubuntu:small --target=small .
-    dir: 00_size/ubuntu
-  size:ubuntu:run:
-    deps: [size:ubuntu:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/size-ubuntu
-
-  size:alpine:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:big --target=big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-big --target=same-as-big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:small --target=small .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-alpine:same-as-small   --target=same-as-small .
-    dir: 00_size/alpine
-  size:alpine:run:
-    deps: [size:alpine:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/size-alpine
-
-  size:build-time-deps:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:big --target=big .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/size-build-time-deps:small --target=small .
-    dir: 00_size/build-time-deps
-  size:build-time-deps:run:
-    deps: [size:build-time-deps:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/size-build-time-deps
-
-  stages:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/stages:builder --target=builder .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/stages:final --target=final .
-    dir: 01_stages
-  stages:run:
-    deps: [stages:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/stages
-      - docker run --rm --name stages-final {{.REPO_PREFIX}}/stages:final
-
-  entrypoint:curl:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/curl:noentrypoint --target=noentrypoint .
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/curl .
-    dir: 02_entrypoint/curl
-  entrypoint:curl:
-    deps: [entrypoint:curl:build]
-    cmds:
-      - docker images {{.REPO_PREFIX}}/curl
-      - docker run --rm -it {{.REPO_PREFIX}}/curl:noentrypoint curl {{.CLI_ARGS}}
-      - docker run --rm -it {{.REPO_PREFIX}}/curl {{.CLI_ARGS}}
-  entrypoint:curl:example:
-    cmds:
-      - task: entrypoint:curl
-        vars:
-          CLI_ARGS: -i https://httpbin.org/anything
-
-  alpine:pull:
-    cmds:
-      - docker pull alpine:{{.TAG}}
-  alpine:
-    deps: [{ task: alpine:pull, vars: { TAG: "3" } }]
-    cmds:
-      - docker run --rm alpine:3 ls -lahi /bin /sbin
-      - docker run --rm alpine:3 ls --help
-      - docker run --rm alpine:3 busybox ls --help
-
-  alpine:compare-tags:
-    deps:
-      - task: alpine:pull
-        vars: { TAG: "latest" }
-      - task: alpine:pull
-        vars: { TAG: "3" }
-      - task: alpine:pull
-        vars: { TAG: "3.13" }
-      - task: alpine:pull
-        vars: { TAG: "3.13.5" }
-    cmds:
-      - docker images alpine
-  alpine:list-packages:
-    cmds:
-      - docker run --pull always --rm -it alpine sh -c 'apk update && apk list --available | wc -l'
-  ubuntu:list-packages:
-    cmds:
-      - docker run --pull always --rm -it ubuntu sh -c 'apt-get update && apt list | wc -l'
-  debian:list-packages:
-    cmds:
-      - docker run --pull always --rm -it debian sh -c 'apt-get update && apt list | wc -l'
-  test:
-    cmds:
-      - docker pull centos:8
-      - docker pull debian:stable
-      - docker pull bitnami/minideb
-      - docker pull debian:stable-slim
-      - docker pull ubuntu:latest
-      - docker pull redis
-      - docker pull redis:alpine
-      - docker pull bitnami/redis
-  volumes:build:
-    cmds:
-      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/volumes .
-    dir: 06_volumes
-  volumes:
-    deps: [volumes:build]
-    cmds:
-      - docker run --rm {{.REPO_PREFIX}}/volumes
-
-  inception:
-    cmds:
-      - docker-compose up -d
-      - sleep 1
-      - docker-compose exec dind docker run alpine ls
-      - docker-compose exec dind docker ps -a
-      - docker-compose down -v --remove-orphans
-    dir: 08_inception
-
-  traefik:
-    cmds:
-      - docker-compose up -d
-      - sleep 3
-      - 'curl -H "Host: whoami.localhost" http://localhost:80'
-      - 'curl -H "Host: frontend.localhost" http://localhost:80'
-      - docker-compose down -v --remove-orphans
-    dir: 09_traefik
-
-  overhead:prettier:
-    cmds:
-      - task: overhead:prettier:help:run:nomount
-      - task: overhead:prettier:help:run:mount
-  overhead:prettier:help:
-    deps: [prerequisites:prettier, prerequisites:hyperfine]
-    cmds:
-      - docker run --init=true --rm --name=prettier -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
-      - |-
-        hyperfine \
-          "prettier --help" \
-          "docker exec prettier prettier --help" \
-          "docker run --rm tmknom/prettier --help" \
-          "docker run --rm -w /code -v $PWD:/code:ro tmknom/prettier --help" \
-          "docker run --rm --network none -w /code -v $PWD:/code:ro tmknom/prettier --help" \
-          "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro tmknom/prettier --help" \
-          "docker run --rm --privileged=true -w /code -v $PWD:/code:ro tmknom/prettier --help"
-      - docker stop prettier
-
-  overhead:prettier:check:
-    deps: [prerequisites:prettier, prerequisites:hyperfine]
-    cmds:
-      - docker run --init=true --rm --name=prettier -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
-      - cmd: |-
-          hyperfine -i \
-           'prettier --check "**/*.{yml,md}"' \
-           'docker exec prettier prettier --check "**/*.{yml,md}"' \
-           "docker run --rm -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
-           "docker run --rm --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
-           "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
-           "docker run --rm --privileged=true -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
-           "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
-        ignore_error: true
-      - docker stop prettier
-
-  overhead:noop:
-    deps: [prerequisites:prettier, prerequisites:hyperfine]
-    cmds:
-      - docker run --init=true --rm --name=noop -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
-      - docker run --init=true --rm --name=noop2 --network=none -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
-      - cmd: |-
-          hyperfine -i \
-           'true' \
-           'docker exec noop true' \
-           'docker exec noop2 true' \
-           "docker run --rm alpine true" \
-           "docker run --rm -w /code -v $PWD:/code:ro alpine true" \
-           "docker run --rm --network none -w /code -v $PWD:/code:ro alpine true" \
-           "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro alpine true" \
-           "docker run --rm --privileged=true -w /code -v $PWD:/code:ro alpine true" \
-           "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro alpine true" \
-           "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none alpine true"
-        ignore_error: true
-      - docker stop noop

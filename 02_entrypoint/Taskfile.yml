@@ -1,0 +1,33 @@
+version: "3.0"
+
+vars:
+  REPO_PREFIX: me.knapik
+  QUIET: '{{default "-q" .QUIET}}'
+  CONTAINER_PRETTIER: tmknom/prettier:2.0.5
+  PRETTIERCLI: |-
+    docker run --rm \
+      -v $PWD:/code \
+      -w /code \
+      {{.CONTAINER_PRETTIER}}
+
+tasks:
+  default:
+    cmds:
+      - task: entrypoint:curl:example
+
+  entrypoint:curl:build:
+    cmds:
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/curl:noentrypoint --target=noentrypoint .
+      - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/curl .
+    dir: ./curl
+  entrypoint:curl:
+    deps: [entrypoint:curl:build]
+    cmds:
+      - docker images {{.REPO_PREFIX}}/curl
+      - docker run --rm -it {{.REPO_PREFIX}}/curl:noentrypoint curl {{.CLI_ARGS}}
+      - docker run --rm -it {{.REPO_PREFIX}}/curl {{.CLI_ARGS}}
+  entrypoint:curl:example:
+    cmds:
+      - task: entrypoint:curl
+        vars:
+          CLI_ARGS: -i https://httpbin.org/anything
