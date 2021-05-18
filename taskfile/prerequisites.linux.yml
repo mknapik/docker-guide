@@ -1,0 +1,169 @@
+# https://taskfile.dev
+
+version: "3.0"
+
+vars:
+  LOCK: flock -w 600 .task.package.lock
+  DISTRO:
+    sh: |-
+      DISTRO=$(
+        (
+          (lsb_release -is) || \
+          (cat /etc/os-release | grep "^ID\=" | cut -d'=' -f2) || \
+          (cat /etc/*release | grep DISTRIB_ID\= | cut -d'=' -f2) 
+        ) 2>/dev/null | tr '[:upper:]' '[:lower:]'
+      )
+      echo -n "$DISTRO"
+  SORT_CMD: sort
+  DOCKER_MINIMAL_VERSION: "20.10"
+
+tasks:
+  install:ubuntu:
+    cmds:
+      - "{{.LOCK}} sudo apt-get update -y"
+      - "{{.LOCK}} sudo apt-get --no-install-recommends install -y {{.CLI_ARGS}}"
+    preconditions:
+      - cat /etc/lsb-release | grep -q Ubuntu
+  install:arch:
+    cmds:
+      - "{{.LOCK}} yay -S --needed --noconfirm {{.CLI_ARGS}}"
+    preconditions:
+      - cat /etc/lsb-release | grep -q Arch
+  install: &x-install
+    silent: true
+    cmds:
+      - task: install:{{.DISTRO}}
+        vars:
+          CLI_ARGS: "{{ default .COMMAND .PACKAGE }}"
+    status:
+      - command -v {{.COMMAND}}
+
+  task:
+    cmds:
+      - task: curl
+      - sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+    status:
+      - command -v task
+      - |-
+        VER=$(echo -e "${TASK_MINIMAL_VERSION}\n$(task --version | cut -d':' -f2 | tr -d ' ')" | {{.SORT_CMD}} -V | head -n1)
+        [ "$VER" = "$TASK_MINIMAL_VERSION" ] || (echo "Upgrade Task to ${TASK_MINIMAL_VERSION}" && exit 127)
+    env:
+      TASK_MINIMAL_VERSION: "3.3.0"
+  git:
+    <<: *x-install
+    vars: { COMMAND: git }
+
+  prettier:
+    <<: *x-install
+    cmds:
+      - task: prettier:{{.DISTRO}}
+    vars: { COMMAND: prettier }
+  hyperfine:
+    <<: *x-install
+    cmds:
+      - task: hyperfine:{{.DISTRO}}
+    vars: { COMMAND: hyperfine }
+  dive:
+    <<: *x-install
+    cmds:
+      - task: dive:{{.DISTRO}}
+    vars: { COMMAND: dive }
+
+  docker:
+    silent: true
+    cmds:
+      - task: docker:engine
+      - task: docker:compose
+  docker:engine:
+    cmds:
+      - task: docker:engine:{{.DISTRO}}
+    status:
+      - command -v docker
+      - |-
+        VER=$(echo -e "{{.DOCKER_MINIMAL_VERSION}}\n$(docker version -f '{{"{{"}}.Server.Version{{"}}"}}')" | {{.SORT_CMD}} -V | head -n1)
+        [ "$VER" = "{{.DOCKER_MINIMAL_VERSION}}" ] || (echo "Upgrade Docker to {{.DOCKER_MINIMAL_VERSION}}" && exit 127)
+  docker:compose:
+    <<: *x-install
+    vars: { COMMAND: docker-compose }
+  direnv:
+    <<: *x-install
+    vars: { COMMAND: direnv }
+  aws-vault:
+    <<: *x-install
+    cmds:
+      - task: aws-vault:{{.DISTRO}}
+    vars: { COMMAND: aws-vault }
+  curl:
+    <<: *x-install
+    vars: { COMMAND: curl }
+
+  flock:
+    # flock is already present in Linux
+    # On top of that, Linux package managers offer locking mechanisms.
+    status:
+      - exit 0
+
+  docker:engine:ubuntu:
+    cmds:
+      - "{{.LOCK}} sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release"
+      - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      - |-
+        echo \
+          "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      - "{{.LOCK}} sudo apt-get update"
+      - "{{.LOCK}} sudo apt-get install -y docker-ce docker-ce-cli containerd.io"
+      - sudo usermod -aG docker $USER
+      - sudo systemctl enable docker
+      - sudo systemctl start docker
+  docker:engine:arch:
+    <<: *x-install
+    vars: { COMMAND: docker }
+
+  prettier:arch:
+    <<: *x-install
+    vars: { COMMAND: prettier }
+  prettier:ubuntu:
+    deps: [npm]
+    <<: *x-install
+    vars: { COMMAND: prettier }
+    cmds:
+      - sudo npm install -g prettier
+  hyperfine:arch:
+    <<: *x-install
+    vars: { COMMAND: hyperfine }
+  hyperfine:ubuntu:
+    <<: *x-install
+    vars: { COMMAND: hyperfine }
+    cmds:
+      - |-
+        DIR=$(mktemp -d)
+        cd "$DIR"
+        curl -L -o \
+          $DIR/hyperfine.deb \
+          https://github.com/sharkdp/hyperfine/releases/download/v1.11.0/hyperfine_1.11.0_amd64.deb
+        sudo dpkg -i hyperfine.deb
+        rm -rf "$DIR"
+  dive:arch:
+    <<: *x-install
+    vars: { COMMAND: dive }
+  dive:ubuntu:
+    <<: *x-install
+    vars: { COMMAND: dive }
+    cmds:
+      - |-
+        DIR=$(mktemp -d)
+        cd "$DIR"
+        curl -L -o \
+          $DIR/dive.deb \
+          https://github.com/wagoodman/dive/releases/download/v0.9.2/dive_0.9.2_linux_amd64.deb
+        sudo apt install ./dive.deb
+        rm -rf "$DIR"
+
+  npm:
+    deps: [node]
+    <<: *x-install
+    vars: { COMMAND: npm }
+  node:
+    <<: *x-install
+    vars: { COMMAND: node, PACKAGE: nodejs }

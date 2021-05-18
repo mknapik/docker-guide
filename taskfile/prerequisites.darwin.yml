@@ -1,0 +1,71 @@
+# https://taskfile.dev
+
+version: "3.0"
+
+vars:
+  LOCK: flock -w 600 .task.brew.lock
+
+tasks:
+  task:
+    cmds:
+      - "{{.LOCK}} brew install go-task/tap/go-task"
+    status:
+      - command -v task
+      - |-
+        VER=$(echo -e "${TASK_MINIMAL_VERSION}\n$(task --version | cut -d':' -f2 | tr -d ' ')" | {{.SORT_CMD}} -V | head -n1)
+        [ "$VER" = "$TASK_MINIMAL_VERSION" ] || (echo "Upgrade Task to ${TASK_MINIMAL_VERSION}" && exit 127)
+    env:
+      TASK_MINIMAL_VERSION: "3.3.0"
+    vars:
+      SORT_CMD: gsort
+  git:
+    cmds:
+      - "{{.LOCK}} brew install git"
+    status:
+      - command -v git
+  prettier:
+    cmds:
+      - "{{.LOCK}} brew install prettier"
+    status:
+      - command -v prettier
+  docker:
+    deps:
+      - docker:engine
+      - docker:compose
+      - coreutils
+    cmds:
+      - |-
+        VER=$(echo -e "$DOCKER_MINIMAL_VERSION\n$(docker version -f '{{"{{"}}.Server.Version{{"}}"}}')" | {{.SORT_CMD}} -V | head -n1)
+        [ "$VER" = "$DOCKER_MINIMAL_VERSION" ] || echo "Upgrade Docker to ${DOCKER_MINIMAL_VERSION}"
+    env:
+      DOCKER_MINIMAL_VERSION: "20.10"
+    vars:
+      SORT_CMD: gsort
+  docker:engine:
+    cmds:
+      - "{{.LOCK}} brew install docker"
+    status:
+      - command -v docker
+  docker:compose:
+    cmds:
+      - "{{.LOCK}} brew install docker-compose"
+    status:
+      - command -v docker-compose
+  coreutils:
+    cmds:
+      - "{{.LOCK}} brew install coreutils"
+    status:
+      - command -v gsort
+  flock:
+    deps:
+      - brew
+    cmds:
+      - brew tap discoteq/discoteq
+      - brew install flock
+    status:
+      - command -v flock
+  brew:
+    cmds:
+      - /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    status:
+      - command -v brew

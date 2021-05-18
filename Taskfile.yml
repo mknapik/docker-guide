@@ -31,9 +31,20 @@ tasks:
       - task: volumes
       - task: caching:java-hello:build
       - task: caching:frontend:build
+  prerequisites:
+    desc: "Installs all external dependencies using OS package manager."
+    cmds:
+      - task: prerequisites:all
+  prerequisites:all:
+    deps:
+      - prerequisites:docker
+      - prerequisites:hyperfine
+      - prerequisites:dive
+      - prerequisites:prettier
+
   format:
     cmds:
-      - '{{.PRETTIERCLI}} public.ecr.aws/u4i8g9e8/prettier:2 --write "**/*.{js,jsx,ts,tsx,css,less,scss,vue,json,gql,md,yml,yaml}"'
+      - '{{.PRETTIERCLI}} --write "**/*.{js,jsx,ts,tsx,css,less,scss,vue,json,gql,md,yml,yaml}"'
   pid1:build:
     cmds:
       - docker build {{.QUIET}} -t {{.REPO_PREFIX}}/pid1:hangs --target hangs .
@@ -280,14 +291,14 @@ tasks:
     cmds:
       - docker run --init=true --rm --name=prettier -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
       - cmd: |-
-             hyperfine -i \
-              'prettier --check "**/*.{yml,md}"' \
-              'docker exec prettier prettier --check "**/*.{yml,md}"' \
-              "docker run --rm -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
-              "docker run --rm --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
-              "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
-              "docker run --rm --privileged=true -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
-              "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
+          hyperfine -i \
+           'prettier --check "**/*.{yml,md}"' \
+           'docker exec prettier prettier --check "**/*.{yml,md}"' \
+           "docker run --rm -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
+           "docker run --rm --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
+           "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\"" \
+           "docker run --rm --privileged=true -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
+           "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro tmknom/prettier --check \"**/*.{yml,md}\""
         ignore_error: true
       - docker stop prettier
 
@@ -297,16 +308,16 @@ tasks:
       - docker run --init=true --rm --name=noop -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
       - docker run --init=true --rm --name=noop2 --network=none -d -w /code -v $PWD:/code:ro --entrypoint="" tmknom/prettier tail -f /dev/null
       - cmd: |-
-             hyperfine -i \
-              'true' \
-              'docker exec noop true' \
-              'docker exec noop2 true' \
-              "docker run --rm alpine true" \
-              "docker run --rm -w /code -v $PWD:/code:ro alpine true" \
-              "docker run --rm --network none -w /code -v $PWD:/code:ro alpine true" \
-              "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro alpine true" \
-              "docker run --rm --privileged=true -w /code -v $PWD:/code:ro alpine true" \
-              "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro alpine true" \
-              "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none alpine true"
+          hyperfine -i \
+           'true' \
+           'docker exec noop true' \
+           'docker exec noop2 true' \
+           "docker run --rm alpine true" \
+           "docker run --rm -w /code -v $PWD:/code:ro alpine true" \
+           "docker run --rm --network none -w /code -v $PWD:/code:ro alpine true" \
+           "docker run --rm --security-opt apparmor=unconfined --security-opt seccomp=unconfined -w /code -v $PWD:/code:ro alpine true" \
+           "docker run --rm --privileged=true -w /code -v $PWD:/code:ro alpine true" \
+           "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none -w /code -v $PWD:/code:ro alpine true" \
+           "docker run --rm --privileged=true --security-opt apparmor=unconfined --network none alpine true"
         ignore_error: true
       - docker stop noop
