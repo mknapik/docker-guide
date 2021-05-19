@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  pre-existing:
+    image: alpine:3
+    command: touch /code/file
+    working_dir: /code
+    init: true
+    user: '1000'
+    volumes:
+      - ./dirs/pre-existing:/code/
+  no-dir-user:
+    image: alpine:3
+    command: touch /code/file
+    working_dir: /code
+    init: true
+    user: '1000'
+    volumes:
+      - ./dirs/non-existent-user:/code/
+  no-dir-root:
+    image: alpine:3
+    command: touch /code/file
+    working_dir: /code
+    init: true
+    user: '0'
+    volumes:
+      - ./dirs/non-existent-root:/code/
+
+  pre-existing-2:
+    image: alpine:3
+    command: touch /code/file
+    working_dir: /code
+    init: true
+    user: '1000'
+    volumes:
+      - ./dirs/pre-existing-2:/etc/apk/
+  no-dir-user-2:
+    image: alpine:3
+    command: touch /code/file
+    working_dir: /code
+    init: true
+    user: '1000'
+    volumes:
+      - ./dirs/non-existent-user-2:/etc/apk/
+  no-dir-root-2:
+    image: alpine:3
+    command: touch /code/file
+    working_dir: /code
+    init: true
+    user: '0'
+    volumes:
+      - ./dirs/non-existent-root-2:/etc/apk/
