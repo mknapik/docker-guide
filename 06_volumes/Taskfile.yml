@@ -23,33 +23,28 @@ tasks:
     deps: [volumes:build]
     cmds:
       - docker run --rm {{.REPO_PREFIX}}/volumes
-  example:
-    cmds:
-      - task: example-nonempty-guest
-      - task: example-empty-guest
-      - task: example-cleanup
   example:cleanup:
     cmds:
-      - git clean -fdx
       - tree -apugfi dirs
       - sudo git clean -fdx
       - tree -apugfi dirs
-  example:nonempty-guest:
+      - docker-compose down --volume --remove-orphans
+  example:guest:
     cmds:
       - tree -apugfi dirs
-      - docker-compose up pre-existing-2
+      - docker-compose up -d
+      - cmd: docker-compose exec app bash -c 'ls -d /code/*/ | xargs -I {} touch {}/newfile'
+        ignore_error: true
       - tree -apugfi dirs
-      - docker-compose up non-existent-user-2
-      - tree -apugfi dirs
-      - docker-compose up non-existent-root-2
-      - tree -apugfi dirs
-  example:empty-guest:
+    env:
+      UID: 1000
+  example:root:
     cmds:
       - tree -apugfi dirs
-      - docker-compose up pre-existing
+      - docker-compose up -d
+      - cmd: docker-compose exec app bash -c 'ls -d /code/*/ | xargs -I {} touch {}/newfile'
+        ignore_error: true
       - tree -apugfi dirs
-      - docker-compose up non-existent-user
-      - tree -apugfi dirs
-      - docker-compose up non-existent-root
-      - tree -apugfi dirs
+    env:
+      UID: 0
 

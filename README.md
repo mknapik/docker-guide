@@ -6,6 +6,8 @@
 
 ## 2. ENTRYPOINT vs CMD
 
+envsubst nginx
+
 ## 3. Alpine Linux - Small but Mighty
 
 ## 4. Dockerfile linter

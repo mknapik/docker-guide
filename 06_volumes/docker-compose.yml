@@ -1,52 +1,29 @@
 version: "3.8"
 
 services:
-  pre-existing:
-    image: alpine:3
-    command: touch /code/file
+  app:
+    build:
+      context: .
+      target: novolumes
+    image: me.knapik/volumes
+    command: tail -f /dev/null
     working_dir: /code
     init: true
-    user: '1000'
+    user: ${UID:-1000}
     volumes:
-      - ./dirs/pre-existing:/code/
-  non-existent-user:
-    image: alpine:3
-    command: touch /code/file
-    working_dir: /code
-    init: true
-    user: '1000'
-    volumes:
-      - ./dirs/non-existent-user:/code/
-  non-existent-root:
-    image: alpine:3
-    command: touch /code/file
-    working_dir: /code
-    init: true
-    user: '0'
-    volumes:
-      - ./dirs/non-existent-root:/code/
+      - ./dirs/pre-existing-dir:/code/pre-existing-dir
+      - ./dirs/non-existent-dir:/code/non-existent-dir
+      - ./dirs/pre-existing-dir-2:/etc/apk/
+      - ./dirs/non-existent-dir-2:/etc/profile.d/
+      - ./dirs/pre-existing-file:/code/pre-existing-file
+      # - ./dirs/non-existent-file:/code/c/1
+      - ./dirs/pre-existing-dir:/code/read-only:ro
+      - a:/code/a
+      - c:/code/c
+      - e:/code/e
 
-  pre-existing-2:
-    image: alpine:3
-    command: ls /etc/apk/
-    working_dir: /code
-    init: true
-    user: '1000'
-    volumes:
-      - ./dirs/pre-existing-2:/etc/apk/
-  non-existent-user-2:
-    image: alpine:3
-    command: ls /etc/apk/
-    working_dir: /code
-    init: true
-    user: '1000'
-    volumes:
-      - ./dirs/non-existent-user-2:/etc/apk/
-  non-existent-root:
-    image: alpine:3
-    command: ls /etc/apk/
-    working_dir: /code
-    init: true
-    user: '0'
-    volumes:
-      - ./dirs/non-existent-root-2:/etc/apk/
+
+volumes:
+  a:
+  c:
+  e:
