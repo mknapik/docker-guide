@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "types": ["node"],
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "lib": ["es2017", "dom"],
+    "allowSyntheticDefaultImports": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["./node_modules"]
+}

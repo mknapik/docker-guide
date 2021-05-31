@@ -58,3 +58,15 @@ tasks:
       - docker images {{.REPO_PREFIX}}/java-hello
       - docker run --init --name java-hello --rm -v $PWD:/code -v /code/.gradle -v /code/build {{.REPO_PREFIX}}/java-hello:builder gradle --continuous run
     dir: ./java-hello
+  caching:server:build:watch:
+    cmds:
+      - find . | entr -r task caching:server:build
+  caching:server:build:
+    cmds:
+      - docker build --build-arg NPM_TOKEN=$NPM_TOKEN -t me.knapik/server .
+      - docker build --build-arg NPM_TOKEN=$NPM_TOKEN -t me.knapik/server:package . --target=package
+      - docker build --build-arg NPM_TOKEN=$NPM_TOKEN -t me.knapik/server:dev . --target=dev
+    dir: ./server
+    preconditions:
+      - sh: '[ ! -z $NPM_TOKEN ]'
+        msg: Missing NPM_TOKEN

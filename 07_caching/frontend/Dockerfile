@@ -1,5 +1,7 @@
 FROM node:alpine AS builder
 
+RUN apk add --no-cache tini
+
 ENV PORT 80
 RUN mkdir -p /code && chown node:node /code
 USER node
@@ -14,6 +16,7 @@ COPY --chown=node:node . /code
 
 RUN yarn build
 
+ENTRYPOINT ["/sbin/tini"]
 CMD [ "npm","run","dev" ]
 
 FROM nginx:alpine AS static

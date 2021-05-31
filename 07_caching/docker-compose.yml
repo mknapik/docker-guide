@@ -1,41 +1,53 @@
 version: "3.8"
 
 services:
-  java-hello:
-    image: me.knapik/java-hello:builder
+  server:
+    image: me.knapik/server:dev
     build:
-      context: java-hello
-      target: builder
-    command: tail -f /dev/null
+      context: server
+      target: dev
     init: true
     volumes:
-      - ./java-hello:/code:ro
-      - /home/gradle/.gradle2
-      - /code/.gradle
-      - /code/build
+      - ./server:/code:ro
+      - node_modules_server:/code/node_modules
+      - dist:/code/dist
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server.rule=Host(`server.knapik.local`)
+      - traefik.http.routers.server.entrypoints=web
+
   frontend:
     image: me.knapik/frontend:builder
     build:
       context: frontend
       target: builder
     init: true
-    ports:
-      - 8080:80
     volumes:
       - ./frontend:/code:ro
-      - node_modules:/code/node_modules
+      - node_modules_frontend:/code/node_modules
       - build:/code/public
-  java-hello-production:
-    image: me.knapik/java-hello
-    build:
-      context: java-hello
-  frontend-production:
-    image: me.knapik/frontend
-    build:
-      context: frontend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`frontend.knapik.local`)
+      - traefik.http.routers.frontend.entrypoints=web
+
+  traefik:
+    image: traefik:v2.4
+    container_name: traefik
+    command:
+      #- --log.level=DEBUG
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
     ports:
-      - 8081:80
+      - 80:80
+      - 8080:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
 volumes:
-  node_modules:
+  dist:
   build:
+  node_modules_server:
+  node_modules_frontend:
