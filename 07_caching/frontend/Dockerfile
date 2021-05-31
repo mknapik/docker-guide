@@ -17,7 +17,7 @@ COPY --chown=node:node . /code
 RUN yarn build
 
 ENTRYPOINT ["/sbin/tini"]
-CMD [ "npm","run","dev" ]
+CMD [ "yarn", "run", "dev" ]
 
 FROM nginx:alpine AS static
 

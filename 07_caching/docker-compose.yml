@@ -6,30 +6,30 @@ services:
     build:
       context: server
       target: dev
-    init: true
     volumes:
       - ./server:/code:ro
       - node_modules_server:/code/node_modules
       - dist:/code/dist
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server.rule=Host(`server.knapik.local`)
-      - traefik.http.routers.server.entrypoints=web
+      - traefik.http.routers.backend.rule=Host(`server.knapik.local`)
+      - traefik.http.routers.backend.entrypoints=web
 
   frontend:
     image: me.knapik/frontend:builder
     build:
       context: frontend
-      target: builder
-    init: true
+      target: static
+    environment:
+      - HOST=frontend
     volumes:
       - ./frontend:/code:ro
       - node_modules_frontend:/code/node_modules
-      - build:/code/public
+      - build:/code/public/build
     labels:
       - traefik.enable=true
-      - traefik.http.routers.frontend.rule=Host(`frontend.knapik.local`)
-      - traefik.http.routers.frontend.entrypoints=web
+      - traefik.http.routers.svelte.rule=Host(`frontend.knapik.local`)
+      - traefik.http.routers.svelte.entrypoints=web
 
   traefik:
     image: traefik:v2.4
