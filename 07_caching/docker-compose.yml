@@ -10,6 +10,8 @@ services:
       - ./server:/code:ro
       - node_modules_server:/code/node_modules
       - dist:/code/dist
+    # ports:
+    #   - 8001:80
     labels:
       - traefik.enable=true
       - traefik.http.routers.backend.rule=Host(`server.knapik.local`)
@@ -26,6 +28,8 @@ services:
       - ./frontend:/code:ro
       - node_modules_frontend:/code/node_modules
       - build:/code/public/build
+    # ports:
+    #   - 8002:80
     labels:
       - traefik.enable=true
       - traefik.http.routers.svelte.rule=Host(`frontend.knapik.local`)
